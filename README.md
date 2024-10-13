@@ -1,7 +1,7 @@
 Auto-XYKS
 ==========
 Auto play Xiaoyuan Kousuan with OCR  
-使用光学字符识别自动化作答小猿口算  **` v0.1 `**
+使用光学字符识别自动化作答小猿口算  **` v0.2 `**
 
 <sup> This project only supports Chinese docs. If you are an English user, feel free to contact us. </sup>
 
@@ -14,30 +14,33 @@ Auto play Xiaoyuan Kousuan with OCR
 本项目实现了自动化作答小猿口算。
 
 ### 实现的功能
-1. **题目识别：**
+1. **题目识别：**  
    从屏幕获取小猿口算的应用截图，经过光学字符识别（OCR）处理后，得出对应的题目内容，然后计算答案。
-2. **模拟书写答案：**
+2. **模拟书写答案：**  
    通过模拟鼠标的操作，在小猿口算的作答区域书写答案。
-3. **（计划中）提供图形操作界面：**
-   - [x] 显示识别的题目内容及答案。
-   - [x] 提供退出和暂停程序的按钮。
-   - [ ] 提供自定义截图区域的操作。
+3. **提供图形操作界面：**  
+   - 显示识别的题目内容及答案。
+   - 提供退出和暂停程序的按钮。
 
 ### 支持的题型
-1. **比较大小：**
-   支持任意位非负整数之间的比较大小。
-2. **加减法运算：**
-   支持任意位非负整数之间的加减法运算。
+1. **比较大小：每题0.5~0.6s**  
+   支持两个任意位非负整数之间的比较大小。
+2. **加减法运算：每题0.9~1.2s**  
+   支持两个任意位非负整数之间的加减法运算。
+
+> **提示：**
+> - 绝大部分的作答时间是消耗在书写答案上，书写一个字符约耗时0.25s，而进行一次截图和 OCR 只需要0.06s。
 
 ### 下一步计划
-1. 通过提前识别下一题来加快作答速度。
+1. 提高作答速度。
 2. 提供自定义截图区域的用户界面。
+3. 支持乘除法运算。
 
 ## 使用方法 <sub>Usage</sub>
-1. 在计算机中配置模拟器环境（以便在计算机中运行安卓软件，推荐的模拟器包括 [BlueStacks](https://www.bluestacks.com) 和 (MuMu)[https://mumu.163.com]）。
+1. 在计算机中配置模拟器环境（以便在计算机中运行安卓软件，推荐的模拟器包括 [BlueStacks](https://www.bluestacks.com) 和 [MuMu](https://mumu.163.com)）。
 2. 在模拟器中安装小猿口算的安卓安装包（APK）。
 3. 下载（或克隆）本仓库的源码到本地。
-4. 确保已安装 [Python](https://www.python.org) 3 运行环境，并安装了 opencv-python，pyautogui，pydirectinput，pytesseract 库（有条件者建议使用 [Poetry](https://python-poetry.org) 依赖管理工具）。
+4. 确保已安装 [Python](https://www.python.org) 3 运行环境，并安装了 opencv-python，pyautogui，keyboard 库（有条件者建议使用 [Poetry](https://python-poetry.org) 依赖管理工具）。
 5. 运行 `Main.py` 即可。
 
 > **注意：**
@@ -56,7 +59,5 @@ Auto play Xiaoyuan Kousuan with OCR
 4. 计算和统计匹配度，匹配度最高的字符模板即为该子图像的识别结果。
 5. 完成所有子图像的识别，连接成串。
 
-经过实验，在软件截图正常运行的情况下（截图位置正确且无干扰），该方案的识别准确率为 100%。
-
 ## 许可证 <sub>Licensing</sub>
-本项目基于 **MIT 开源许可证**，详情参见 [License](https://github.com/isHarryh/Auto-USTB-GFJY/blob/main/LICENSE) 页面。
+本项目基于 **MIT 开源许可证**，详情参见 [License](https://github.com/isHarryh/Auto-XYKS/blob/main/LICENSE) 页面。
