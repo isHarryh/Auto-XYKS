@@ -3,4 +3,5 @@
 __pycache__/
 
 # Include
+!assets/
 !src/
