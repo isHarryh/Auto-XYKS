@@ -4,7 +4,6 @@
 import cv2
 import os
 import numpy as np
-import pytesseract as pt
 from .utils.AnalyUtils import TestRT
 
 
@@ -54,10 +53,11 @@ class TemplateSet:
 
 class Recognizer:
     T_CHARS = TemplateSet('assets/templates/chars', use_grayscale=True)
-    T_THRESHOLD = 0.7
+    T_THRESHOLD = 0.5
+    S_THRESHOLD = 255
 
-    def __init__(self, use_tesseract:bool=False):
-        self._use_tesseract = use_tesseract
+    def __init__(self):
+        pass
 
     def match(self, image:cv2.typing.MatLike, template:cv2.typing.MatLike, name:str=""):
         rst = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
@@ -72,14 +72,10 @@ class Recognizer:
 
     def best_match(self, image:cv2.typing.MatLike, template_set:TemplateSet, min_confidence:float=None):
         rst = max((self.safe_match(image, v, k) for k, v in template_set.data.items()), key=lambda x:x.confidence)
-        return rst if min_confidence is not None or rst.confidence >= min_confidence else None
+        return rst if min_confidence is None or rst.confidence >= min_confidence else None
 
     def recognize(self, image:cv2.typing.MatLike):
-        return self._recognize_tesseract(image) if self._use_tesseract else self._recognize_opencv(image)
-
-    def _recognize_tesseract(self, image:cv2.typing.MatLike):
-        with TestRT("recognize_tesseract"):
-            return str(pt.image_to_string(image)).replace(' ', '').split('\n')
+        return self._recognize_opencv(image)
 
     def _recognize_opencv(self, image:cv2.typing.MatLike, template_set:TemplateSet=T_CHARS):
         with TestRT("recognize_opencv"):
@@ -88,7 +84,7 @@ class Recognizer:
             for seg_image in segmented:
                 if result := self.best_match(seg_image, template_set, Recognizer.T_THRESHOLD):
                     recognized += result.name
-            return [recognized]
+            return recognized
 
     @staticmethod
     def char_segmentation(image:cv2.typing.MatLike):
@@ -99,6 +95,8 @@ class Recognizer:
             if len(image.shape) != 2:
                 raise RuntimeError("Image must have exactly one tunnel")
             image = cv2.convertScaleAbs(image, alpha=1.75, beta=-32.0)
+            image = cv2.normalize(image, None, alpha=-32, beta=255, norm_type=cv2.NORM_MINMAX)
+            image = np.clip(image, 0, 255)
 
             # Generate histogram
             h, w = image.shape
@@ -115,9 +113,9 @@ class Recognizer:
                 _char_images = []
                 _idx0 = None
                 for i in range(_h if _is_y else _w):
-                    if _histogram[i] < 255 and _idx0 is None: # White is bg pixel
+                    if _histogram[i] < Recognizer.S_THRESHOLD and _idx0 is None:
                         _idx0 = i
-                    elif _histogram[i] == 255 and _idx0 is not None:
+                    elif _histogram[i] >= Recognizer.S_THRESHOLD and _idx0 is not None:
                         _idx1 = i
                         _char_image = _image[_idx0:_idx1, :] if _is_y else _image[:, _idx0:_idx1]
                         if _char_image.size > 1:
