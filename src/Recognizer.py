@@ -136,22 +136,3 @@ class Recognizer:
             for t in temp:
                 char_images.extend(_one_dimension_seg(t, vertical_avg, True))
             return char_images
-
-    @staticmethod
-    def max_pooling(image:cv2.typing.MatLike, new_size:tuple):
-        origin_h, origin_w = image.shape
-        new_h, new_w = new_size
-        pool_h, pool_w = origin_h // new_h, origin_w // new_w
-
-        result = np.zeros((new_h, new_w), dtype=image.dtype)
-        for y in range(new_h):
-            for x in range(new_w):
-                # Calculate region edges
-                start_y = y * pool_h
-                end_y = start_y + pool_h
-                start_x = x * pool_w
-                end_x = start_x + pool_w
-                # Do max pooling
-                pool_region = image[start_y:end_y, start_x:end_x]
-                result[y, x] = np.max(pool_region)
-        return result
