@@ -88,49 +88,48 @@ class Recognizer:
 
     @staticmethod
     def char_segmentation(image:cv2.typing.MatLike):
-        with TestRT("char_segmentation"):
-            # Preprocess
-            if len(image.shape) == 3:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            if len(image.shape) != 2:
-                raise RuntimeError("Image must have exactly one tunnel")
-            image = cv2.convertScaleAbs(image, alpha=1.75, beta=-32.0)
-            image = cv2.normalize(image, None, alpha=-32, beta=255, norm_type=cv2.NORM_MINMAX)
-            image = np.clip(image, 0, 255)
+        # Preprocess
+        if len(image.shape) == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if len(image.shape) != 2:
+            raise RuntimeError("Image must have exactly one tunnel")
+        image = cv2.convertScaleAbs(image, alpha=1.75, beta=-32.0)
+        image = cv2.normalize(image, None, alpha=-32, beta=255, norm_type=cv2.NORM_MINMAX)
+        image = np.clip(image, 0, 255)
 
-            # Generate histogram
-            h, w = image.shape
-            vertical_avg = np.zeros((h, 1), dtype=image.dtype)
-            horizontal_avg = np.zeros((w, 1), dtype=image.dtype)
-            for y in range(h):
-                vertical_avg[y] = np.average(image[y, :])
-            for x in range(w):
-                horizontal_avg[x] = np.average(image[:, x])
+        # Generate histogram
+        h, w = image.shape
+        vertical_avg = np.zeros((h, 1), dtype=image.dtype)
+        horizontal_avg = np.zeros((w, 1), dtype=image.dtype)
+        for y in range(h):
+            vertical_avg[y] = np.average(image[y, :])
+        for x in range(w):
+            horizontal_avg[x] = np.average(image[:, x])
 
-            # Do segmentation
-            def _one_dimension_seg(_image, _histogram, _is_y):
-                _h, _w = _image.shape
-                _char_images = []
-                _idx0 = None
-                for i in range(_h if _is_y else _w):
-                    if _histogram[i] < Recognizer.S_THRESHOLD and _idx0 is None:
-                        _idx0 = i
-                    elif _histogram[i] >= Recognizer.S_THRESHOLD and _idx0 is not None:
-                        _idx1 = i
-                        _char_image = _image[_idx0:_idx1, :] if _is_y else _image[:, _idx0:_idx1]
-                        if _char_image.size > 1:
-                            _char_images.append(_char_image)
-                        _idx0 = None
-                if _idx0 is not None:
+        # Do segmentation
+        def _one_dimension_seg(_image, _histogram, _is_y):
+            _h, _w = _image.shape
+            _char_images = []
+            _idx0 = None
+            for i in range(_h if _is_y else _w):
+                if _histogram[i] < Recognizer.S_THRESHOLD and _idx0 is None:
+                    _idx0 = i
+                elif _histogram[i] >= Recognizer.S_THRESHOLD and _idx0 is not None:
                     _idx1 = i
                     _char_image = _image[_idx0:_idx1, :] if _is_y else _image[:, _idx0:_idx1]
                     if _char_image.size > 1:
                         _char_images.append(_char_image)
-                return _char_images
+                    _idx0 = None
+            if _idx0 is not None:
+                _idx1 = i
+                _char_image = _image[_idx0:_idx1, :] if _is_y else _image[:, _idx0:_idx1]
+                if _char_image.size > 1:
+                    _char_images.append(_char_image)
+            return _char_images
 
-            # Horizontal splitting first, then vertical splitting
-            temp = _one_dimension_seg(image, horizontal_avg, False)
-            char_images = []
-            for t in temp:
-                char_images.extend(_one_dimension_seg(t, vertical_avg, True))
-            return char_images
+        # Horizontal splitting first, then vertical splitting
+        temp = _one_dimension_seg(image, horizontal_avg, False)
+        char_images = []
+        for t in temp:
+            char_images.extend(_one_dimension_seg(t, vertical_avg, True))
+        return char_images

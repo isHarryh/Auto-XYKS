@@ -16,6 +16,9 @@ class Calculator:
 
     def solve(self, problem:str, ignore_error:bool=False):
         try:
+            if not problem:
+                raise ValueError("Argument problem is empty")
+
             # Separate numbers and signs
             splitted = []
             pending_num = ""

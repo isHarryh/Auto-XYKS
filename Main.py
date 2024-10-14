@@ -23,19 +23,18 @@ if __name__ == '__main__':
     def _loop():
         global recog, calcu, agent, ui
         try:
-            while not agent.is_async_draw_idle():
-                time.sleep(0.01)
             this_image = agent.get_screen_image(PlayerAgent.REGION_THIS_QUESTION)
-            if np.average(this_image) > 196 and np.min(this_image) < 32:
+            if np.average(this_image) > 196 and np.min(this_image) < 24:
                 Logger.debug("Recognizing")
                 this_qst = recog.recognize(this_image)
-                if this_qst and this_cache.update(this_qst[:-1]):
-                    this_ans = calcu.solve(this_qst, ignore_error=True)
-                    if this_ans:
-                        Logger.info(f"Question: {''.join(this_qst)} (Answer: {this_ans})")
-                        ui.set_label_text(f"{''.join(this_qst)}\n{this_ans}")
-                        agent.async_draw_answer(this_ans, ignore_error=True)
-                        time.sleep(0.25)
+                this_ans = calcu.solve(this_qst, ignore_error=True)
+                if this_qst and this_ans and this_cache.update(this_qst.replace('U', '')):
+                    while not agent.is_async_draw_idle():
+                        time.sleep(0.001)
+                    Logger.info(f"Question: {''.join(this_qst)} (Answer: {this_ans})")
+                    agent.async_draw_answer(this_ans, ignore_error=True)
+                    ui.set_label_text(f"{''.join(this_qst)}\n{this_ans}")
+                    time.sleep(0.2)
         except pag.FailSafeException:
             Logger.error("FailSafe triggered")
             exit()
