@@ -7,26 +7,57 @@ import json
 import threading
 import numpy as np
 import pyautogui as pag
+from typing import Callable
 from .utils.AnalyUtils import TestRT
 from .utils.Logger import Logger
 
 pag.PAUSE = 0.04
 
 
-class TimeGateCache:
-    def __init__(self, expire_time:float=0):
-        self._value = None
+class TimeGateCacheQueue:
+    def __init__(self, expire_time:float=0, compare_key:Callable=lambda x:x):
+        self._cache:object = None
+        self._this:object = None
+        self._next:object = None
         self._expire = expire_time
-        self._create_at = 0
+        self._key = compare_key
+        self._update_at = 0
+        self._internal_lock = threading.Lock()
 
-    def update(self, value:object):
-        if value != self._value or self._create_at + self._expire < time.time():
-            self._value = value
-            self._create_at = time.time()
-            return True
-        else:
-            return False
+    def update(self, this:object, next:object):
+        with self._internal_lock:
+            t = time.time()
+            if self._update_at + self._expire < t or self._next is None:
+                if next is not None and self._key(next) == self._key(self._this) or \
+                    this is not None and self._key(this) == self._key(self._cache):
+                    self._update_at = t
+                self._cache = None
+                self._this = this
+                self._next = next
+                return True
+            else:
+                return False
 
+    def is_expired(self):
+        with self._internal_lock:
+            return self._update_at + self._expire < time.time()
+
+    def ready(self):
+        with self._internal_lock:
+            return self._update_at + self._expire < time.time() or \
+                self._this is not None or self._next is not None
+
+    def pop(self):
+        with self._internal_lock:
+            if self._this is not None:
+                self._cache = self._this
+                self._this = self._next
+                self._next = None
+                return self._cache
+            return None
+
+    def __repr__(self):
+        return f"[{self._this}, {self._next}] @ {self._update_at}"
 
 class PlayerAgent:
     GRAYSCALE_CAPTURE = False
